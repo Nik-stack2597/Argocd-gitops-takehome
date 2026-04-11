@@ -1,0 +1,79 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: argocd-alerts
+  namespace: {{ .Release.Namespace }}
+  labels:
+    release: monitoring
+    app: kube-prometheus-stack
+spec:
+  groups:
+    - name: argocd.rules
+      rules:
+        # Fires when any application has been in a failed sync state for > 5 min
+        - alert: ArgocdAppSyncFailed
+          expr: |
+            argocd_app_info{sync_status="Unknown"} == 1
+            or
+            (
+              increase(argocd_app_sync_total{phase="Failed"}[10m]) > 0
+              unless
+              increase(argocd_app_sync_total{phase="Succeeded"}[10m]) > 0
+            )
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Argo CD application {{ "{{" }} $labels.name {{ "}}" }} sync has failed"
+            description: >-
+              Application {{ "{{" }} $labels.name {{ "}}" }} in project
+              {{ "{{" }} $labels.project {{ "}}" }} has not synced successfully
+              for more than 5 minutes. Investigate the sync error in the
+              Argo CD UI or via `argocd app get {{ "{{" }} $labels.name {{ "}}" }}`.
+
+        # Fires when an application health is Degraded for > 5 min
+        - alert: ArgocdAppHealthDegraded
+          expr: argocd_app_info{health_status="Degraded"} == 1
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Argo CD application {{ "{{" }} $labels.name {{ "}}" }} is Degraded"
+            description: >-
+              Application {{ "{{" }} $labels.name {{ "}}" }} health has been
+              Degraded for over 5 minutes. This usually indicates failing pods,
+              CrashLoopBackOff, or misconfigured resources.
+
+        # Fires when Git fetch error rate exceeds 20% over 10 min
+        - alert: ArgocdGitFetchFailing
+          expr: |
+            (
+              sum(rate(argocd_git_request_total{request_type="fetch", result="error"}[10m]))
+              /
+              sum(rate(argocd_git_request_total{request_type="fetch"}[10m]))
+            ) > 0.2
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Argo CD Git fetch error rate is above 20%"
+            description: >-
+              More than 20% of Git fetch operations are failing. Check network
+              connectivity, Git credentials, and repository availability.
+
+        # Fires when reconciliation p99 exceeds 30s sustained for 10 min
+        - alert: ArgocdReconciliationSlow
+          expr: |
+            histogram_quantile(0.99,
+              sum(rate(argocd_app_reconcile_bucket[5m])) by (le)
+            ) > 30
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Argo CD reconciliation latency is high (p99 > 30s)"
+            description: >-
+              The 99th-percentile reconciliation duration has exceeded 30 seconds
+              for the past 10 minutes. This may indicate resource contention
+              on the application-controller or an unusually large number of
+              managed resources.

@@ -1,0 +1,12 @@
+apiVersion: v2
+name: argocd-platform
+description: >-
+  Wrapper chart for Argo CD. Pulls in the upstream argo/argo-cd chart
+  as a dependency and applies enterprise customizations: custom Helm binary,
+  metrics exposure, and operational defaults.
+version: 1.0.0
+type: application
+dependencies:
+  - name: argo-cd
+    version: "9.4.17"
+    repository: https://argoproj.github.io/argo-helm

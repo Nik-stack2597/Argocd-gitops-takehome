@@ -1,0 +1,2 @@
+# Helm dependency archives (from `helm dependency update`)
+*.tgz

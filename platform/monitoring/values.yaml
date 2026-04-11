@@ -1,0 +1,85 @@
+kube-prometheus-stack:
+  # ---------------------------------------------------------------------------
+  # Prometheus
+  # ---------------------------------------------------------------------------
+  prometheus:
+    prometheusSpec:
+      # Discover ServiceMonitors across all namespaces (including argocd)
+      serviceMonitorSelectorNilUsesHelmValues: false
+      serviceMonitorNamespaceSelector: {}
+      serviceMonitorSelector: {}
+
+      # Discover PrometheusRules across all namespaces
+      ruleSelectorNilUsesHelmValues: false
+      ruleNamespaceSelector: {}
+      ruleSelector: {}
+
+      # Discover PodMonitors across all namespaces
+      podMonitorSelectorNilUsesHelmValues: false
+      podMonitorNamespaceSelector: {}
+      podMonitorSelector: {}
+
+      retention: 7d
+      resources:
+        requests:
+          memory: 512Mi
+          cpu: 250m
+        limits:
+          memory: 2Gi
+
+  # ---------------------------------------------------------------------------
+  # Grafana
+  # ---------------------------------------------------------------------------
+  grafana:
+    adminPassword: prom-operator
+    defaultDashboardsEnabled: true
+
+    dashboardProviders:
+      dashboardproviders.yaml:
+        apiVersion: 1
+        providers:
+          - name: argocd
+            orgId: 1
+            folder: Argo CD
+            type: file
+            disableDeletion: true
+            editable: false
+            options:
+              path: /var/lib/grafana/dashboards/argocd
+
+    dashboardsConfigMaps:
+      argocd: argocd-grafana-dashboard
+
+    sidecar:
+      dashboards:
+        enabled: true
+        searchNamespace: ALL
+        label: grafana_dashboard
+        labelValue: "1"
+
+  # ---------------------------------------------------------------------------
+  # Alertmanager
+  # ---------------------------------------------------------------------------
+  alertmanager:
+    alertmanagerSpec:
+      resources:
+        requests:
+          memory: 64Mi
+          cpu: 50m
+        limits:
+          memory: 256Mi
+
+  coreDns:
+    enabled: false
+  kubeDns:
+    enabled: false
+  kubelet:
+    enabled: false
+  kubeEtcd:
+    enabled: false
+  kubeScheduler:
+    enabled: false
+  kubeControllerManager:
+    enabled: false
+  kubeProxy:
+    enabled: false

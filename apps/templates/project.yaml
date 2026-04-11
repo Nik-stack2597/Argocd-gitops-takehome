@@ -1,0 +1,24 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: platform
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  description: Platform-level infrastructure managed by the platform team
+  sourceRepos:
+    - '*'
+  destinations:
+    - namespace: argocd
+      server: {{ .Values.spec.destination.server }}
+    - namespace: monitoring
+      server: {{ .Values.spec.destination.server }}
+  clusterResourceWhitelist:
+    - group: '*'
+      kind: '*'
+  namespaceResourceWhitelist:
+    - group: '*'
+      kind: '*'

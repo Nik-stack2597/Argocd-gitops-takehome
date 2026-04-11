@@ -1,0 +1,8 @@
+apiVersion: v2
+name: root-apps
+description: >-
+  Root App-of-Apps chart. Each template defines an Argo CD Application
+  that manages one component of the platform (ArgoCD itself, monitoring, etc.).
+  Argo CD syncs this chart and creates child Applications automatically.
+version: 1.0.0
+type: application
