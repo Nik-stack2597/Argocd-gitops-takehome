@@ -46,7 +46,7 @@ argo-cd:
         args:
           - |
             set -euo pipefail
-            HELM_VERSION="3.16.4"
+            HELM_VERSION="3.17.0"
             ARCH="amd64"
             echo "Downloading Helm v${HELM_VERSION}..."
             wget -qO- "https://get.helm.sh/helm-v${HELM_VERSION}-linux-${ARCH}.tar.gz" \
