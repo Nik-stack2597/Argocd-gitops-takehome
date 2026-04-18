@@ -1,22 +1,29 @@
-# Optional image: Argo CD base image with Helm 3.16.4 instead of the bundled version.
-# Build: docker build -t custom-argocd:v3.3.6-helm3.16.4 -f Dockerfile.custom-argocd .
-
 FROM quay.io/argoproj/argocd:v3.3.6
 
 ARG HELM_VERSION=3.17.0
-ARG TARGETARCH=amd64
+ARG TARGETARCH
 
 USER root
 
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends curl ca-certificates && \
-    curl -fsSL "https://get.helm.sh/helm-v${HELM_VERSION}-linux-${TARGETARCH}.tar.gz" \
-      | tar xz -C /tmp && \
-    mv /tmp/linux-${TARGETARCH}/helm /usr/local/bin/helm && \
-    chmod +x /usr/local/bin/helm && \
-    rm -rf /tmp/linux-${TARGETARCH} && \
-    apt-get purge -y curl && \
-    apt-get autoremove -y && \
+RUN set -eux; \
+    ARCH="${TARGETARCH:-}"; \
+    if [ -z "${ARCH}" ]; then \
+      case "$(uname -m)" in \
+        x86_64)   ARCH="amd64" ;; \
+        aarch64)  ARCH="arm64" ;; \
+        armv7l)   ARCH="arm" ;; \
+        *) echo "unsupported arch $(uname -m)"; exit 1 ;; \
+      esac; \
+    fi; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends curl ca-certificates; \
+    curl -fsSL "https://get.helm.sh/helm-v${HELM_VERSION}-linux-${ARCH}.tar.gz" \
+      | tar xz -C /tmp; \
+    mv "/tmp/linux-${ARCH}/helm" /usr/local/bin/helm; \
+    chmod +x /usr/local/bin/helm; \
+    rm -rf "/tmp/linux-${ARCH}"; \
+    apt-get purge -y curl; \
+    apt-get autoremove -y; \
     rm -rf /var/lib/apt/lists/*
 
 USER argocd
