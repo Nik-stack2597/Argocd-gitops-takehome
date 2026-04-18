@@ -5,6 +5,7 @@ argo-cd:
       format: json
 
   server:
+    revisionHistoryLimit: 1
     service:
       type: ClusterIP
     extraArgs:
@@ -27,6 +28,8 @@ argo-cd:
           release: monitoring
 
   repoServer:
+    # Prevent old ReplicaSets from lingering after a failed upgrade.
+    revisionHistoryLimit: 1
     resources:
       requests:
         cpu: 100m
