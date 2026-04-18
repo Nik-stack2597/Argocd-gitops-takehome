@@ -27,6 +27,21 @@ argo-cd:
           release: monitoring
 
   repoServer:
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+    livenessProbe:
+      initialDelaySeconds: 30
+      timeoutSeconds: 10
+      failureThreshold: 5
+    readinessProbe:
+      initialDelaySeconds: 15
+      timeoutSeconds: 10
+      failureThreshold: 5
     metrics:
       enabled: true
       serviceMonitor:
