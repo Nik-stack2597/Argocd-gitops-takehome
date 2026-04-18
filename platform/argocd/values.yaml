@@ -110,6 +110,8 @@ argo-cd:
   configs:
     params:
       server.insecure: true
+      reposerver.parallelism.limit: "2"
+      controller.repo.server.timeout.seconds: "300"
     cm:
       timeout.reconciliation: 180s
       resource.exclusions: |
