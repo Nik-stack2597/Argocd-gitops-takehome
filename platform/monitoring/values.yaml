@@ -1,40 +1,24 @@
 kube-prometheus-stack:
-  # ---------------------------------------------------------------------------
-  # Prometheus
-  # ---------------------------------------------------------------------------
   prometheus:
     prometheusSpec:
       serviceMonitorSelectorNilUsesHelmValues: false
       serviceMonitorNamespaceSelector: {}
       serviceMonitorSelector: {}
-
       ruleSelectorNilUsesHelmValues: false
       ruleNamespaceSelector: {}
       ruleSelector: {}
-
       podMonitorSelectorNilUsesHelmValues: false
       podMonitorNamespaceSelector: {}
       podMonitorSelector: {}
-
-      retention: 7d
-
+      retention: 2h
       livenessProbeInitialDelaySeconds: 60
       readinessProbeInitialDelaySeconds: 30
-
       resources:
-        requests:
-          memory: 512Mi
-          cpu: 250m
-        limits:
-          memory: 2Gi
-
-  # ---------------------------------------------------------------------------
-  # Grafana
-  # ---------------------------------------------------------------------------
+        requests: { cpu: 100m, memory: 256Mi }
+        limits:   { memory: 768Mi }
   grafana:
     adminPassword: prom-operator
     defaultDashboardsEnabled: true
-
     dashboardProviders:
       dashboardproviders.yaml:
         apiVersion: 1
@@ -45,97 +29,40 @@ kube-prometheus-stack:
             type: file
             disableDeletion: true
             editable: false
-            options:
-              path: /var/lib/grafana/dashboards/argocd
-
+            options: { path: /var/lib/grafana/dashboards/argocd }
     dashboardsConfigMaps:
       argocd: argocd-grafana-dashboard
-
     sidecar:
       dashboards:
         enabled: true
         searchNamespace: ALL
         label: grafana_dashboard
         labelValue: "1"
-
-  # ---------------------------------------------------------------------------
-  # Alertmanager
-  # ---------------------------------------------------------------------------
+    resources:
+      requests: { cpu: 50m, memory: 96Mi }
+      limits:   { cpu: 300m, memory: 256Mi }
   alertmanager:
-    alertmanagerSpec:
-      resources:
-        requests:
-          memory: 64Mi
-          cpu: 50m
-        limits:
-          memory: 256Mi
-
-  # ---------------------------------------------------------------------------
-  # Prometheus Operator (relax probes, add resources)
-  # ---------------------------------------------------------------------------
+    enabled: false
   prometheusOperator:
     resources:
-      requests:
-        cpu: 100m
-        memory: 128Mi
-      limits:
-        cpu: 500m
-        memory: 512Mi
-    livenessProbe:
-      initialDelaySeconds: 30
-      periodSeconds: 20
-      timeoutSeconds: 10
-      failureThreshold: 6
-    readinessProbe:
-      initialDelaySeconds: 15
-      periodSeconds: 20
-      timeoutSeconds: 10
-      failureThreshold: 6
-
-  # ---------------------------------------------------------------------------
-  # kube-state-metrics (subchart)
-  # ---------------------------------------------------------------------------
+      requests: { cpu: 50m, memory: 64Mi }
+      limits:   { cpu: 300m, memory: 256Mi }
+    livenessProbe:  { initialDelaySeconds: 30, periodSeconds: 20, timeoutSeconds: 10, failureThreshold: 6 }
+    readinessProbe: { initialDelaySeconds: 15, periodSeconds: 20, timeoutSeconds: 10, failureThreshold: 6 }
   kube-state-metrics:
     resources:
-      requests:
-        cpu: 50m
-        memory: 64Mi
-      limits:
-        cpu: 300m
-        memory: 256Mi
-    livenessProbe:
-      initialDelaySeconds: 30
-      periodSeconds: 20
-      timeoutSeconds: 10
-      failureThreshold: 6
-    readinessProbe:
-      periodSeconds: 20
-      timeoutSeconds: 10
-      failureThreshold: 6
-
-  # ---------------------------------------------------------------------------
-  # Node Exporter (subchart)
-  # ---------------------------------------------------------------------------
+      requests: { cpu: 30m, memory: 48Mi }
+      limits:   { cpu: 200m, memory: 192Mi }
+    livenessProbe:  { initialDelaySeconds: 30, periodSeconds: 20, timeoutSeconds: 10, failureThreshold: 6 }
+    readinessProbe: { periodSeconds: 20, timeoutSeconds: 10, failureThreshold: 6 }
   prometheus-node-exporter:
     resources:
-      requests:
-        cpu: 20m
-        memory: 32Mi
-      limits:
-        cpu: 200m
-        memory: 128Mi
-
-  coreDns:
-    enabled: false
-  kubeDns:
-    enabled: false
-  kubelet:
-    enabled: false
-  kubeEtcd:
-    enabled: false
-  kubeScheduler:
-    enabled: false
-  kubeControllerManager:
-    enabled: false
-  kubeProxy:
-    enabled: false
+      requests: { cpu: 20m, memory: 32Mi }
+      limits:   { cpu: 200m, memory: 96Mi }
+  coreDns: { enabled: false }
+  kubeDns: { enabled: false }
+  kubelet: { enabled: false }
+  kubeEtcd: { enabled: false }
+  kubeScheduler: { enabled: false }
+  kubeControllerManager: { enabled: false }
+  kubeProxy: { enabled: false }
