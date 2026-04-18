@@ -1,6 +1,8 @@
-.PHONY: bootstrap teardown status cluster-up cluster-down \
+.PHONY: bootstrap install teardown status cluster-up cluster-down \
        install-argocd apply-root-app port-forward-argocd port-forward-grafana \
-       argocd-password verify-helm-version lint help
+       port-forward-prometheus port-forward-stop \
+       argocd-password verify-helm-version lint help \
+       preflight watch refresh sync-all debug-cascade top
 
 CLUSTER_PROFILE   := argocd-gitops
 ARGOCD_NAMESPACE  := argocd
@@ -9,6 +11,10 @@ MINIKUBE_CPUS     := 4
 MINIKUBE_MEMORY   := 4096
 MINIKUBE_DRIVER   := docker
 REPO_URL          := $(shell git remote get-url origin 2>/dev/null || echo "https://github.com/Nik-stack2597/Argocd-gitops-takehome.git")
+
+ARGOCD_LOCAL_PORT     ?= 8085
+GRAFANA_LOCAL_PORT    ?= 3000
+PROMETHEUS_LOCAL_PORT ?= 9090
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*##' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "}; {printf "  \033[36m%-24s\033[0m %s\n", $$1, $$2}'
@@ -63,13 +69,33 @@ status: ## Show status of all ArgoCD Applications and pods
 	@echo "==> Monitoring pods:"
 	@kubectl get pods -n $(MONITOR_NAMESPACE) 2>/dev/null || echo "  (namespace not found)"
 
-port-forward-argocd: ## Forward ArgoCD UI to localhost:8080
-	@echo "==> ArgoCD UI at https://localhost:8080  (admin / $$(make -s argocd-password))"
-	kubectl port-forward svc/argocd-server -n $(ARGOCD_NAMESPACE) 8080:443
+port-forward-argocd: ## Forward ArgoCD UI to localhost:$(ARGOCD_LOCAL_PORT) (override: make port-forward-argocd ARGOCD_LOCAL_PORT=9000)
+	@if lsof -iTCP:$(ARGOCD_LOCAL_PORT) -sTCP:LISTEN -P >/dev/null 2>&1; then \
+		echo "!! Port $(ARGOCD_LOCAL_PORT) is already in use by:"; \
+		lsof -iTCP:$(ARGOCD_LOCAL_PORT) -sTCP:LISTEN -P | tail -n +2; \
+		echo "!! Override: make port-forward-argocd ARGOCD_LOCAL_PORT=<free-port>"; \
+		exit 1; \
+	fi
+	@echo "==> ArgoCD UI at https://localhost:$(ARGOCD_LOCAL_PORT)  (admin / $$(make -s argocd-password))"
+	kubectl port-forward svc/argocd-server -n $(ARGOCD_NAMESPACE) $(ARGOCD_LOCAL_PORT):443
 
-port-forward-grafana: ## Forward Grafana UI to localhost:3000
-	@echo "==> Grafana at http://localhost:3000  (admin / prom-operator)"
-	kubectl port-forward svc/monitoring-grafana -n $(MONITOR_NAMESPACE) 3000:80
+port-forward-grafana: ## Forward Grafana UI to localhost:$(GRAFANA_LOCAL_PORT)
+	@if lsof -iTCP:$(GRAFANA_LOCAL_PORT) -sTCP:LISTEN -P >/dev/null 2>&1; then \
+		echo "!! Port $(GRAFANA_LOCAL_PORT) in use — override with GRAFANA_LOCAL_PORT=<free>"; exit 1; \
+	fi
+	@echo "==> Grafana at http://localhost:$(GRAFANA_LOCAL_PORT)  (admin / prom-operator)"
+	kubectl port-forward svc/monitoring-grafana -n $(MONITOR_NAMESPACE) $(GRAFANA_LOCAL_PORT):80
+
+port-forward-prometheus: ## Forward Prometheus UI to localhost:$(PROMETHEUS_LOCAL_PORT)
+	@if lsof -iTCP:$(PROMETHEUS_LOCAL_PORT) -sTCP:LISTEN -P >/dev/null 2>&1; then \
+		echo "!! Port $(PROMETHEUS_LOCAL_PORT) in use — override with PROMETHEUS_LOCAL_PORT=<free>"; exit 1; \
+	fi
+	@echo "==> Prometheus at http://localhost:$(PROMETHEUS_LOCAL_PORT)"
+	kubectl port-forward svc/monitoring-kube-prometheus-prometheus -n $(MONITOR_NAMESPACE) $(PROMETHEUS_LOCAL_PORT):9090
+
+port-forward-stop: ## Kill all kubectl port-forward processes
+	@pkill -f 'kubectl.*port-forward' 2>/dev/null || true
+	@echo "==> All kubectl port-forwards stopped."
 
 argocd-password: ## Print the ArgoCD admin password
 	@kubectl -n $(ARGOCD_NAMESPACE) get secret argocd-initial-admin-secret \
