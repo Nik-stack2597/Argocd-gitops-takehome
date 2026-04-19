@@ -48,6 +48,8 @@ bootstrap: cluster-up install-argocd apply-root-app ## Full bootstrap: cluster +
 	@echo " Password:   make argocd-password"
 	@echo "============================================="
 
+install: install-argocd ## Install ArgoCD (Helm); alias for install-argocd
+
 install-argocd: ## Helm-install ArgoCD (initial bootstrap only)
 	./bootstrap/install.sh
 
