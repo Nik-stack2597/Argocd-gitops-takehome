@@ -1,2 +1,7 @@
 # Helm dependency archives (from `helm dependency update`)
 *.tgz
+# Vendored kube-prometheus-stack in monitoring chart (re-include parent path for negation).
+!platform/
+!platform/monitoring/
+!platform/monitoring/charts/
+!platform/monitoring/charts/*.tgz

@@ -30,6 +30,10 @@ argo-cd:
   repoServer:
     # Prevent old ReplicaSets from lingering after a failed upgrade.
     revisionHistoryLimit: 1
+    # kube-prometheus-stack + deps can exceed default 90s Helm template timeout.
+    env:
+      - name: ARGOCD_EXEC_TIMEOUT
+        value: "300s"
     resources:
       requests:
         cpu: 100m
