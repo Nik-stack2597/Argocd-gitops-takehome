@@ -95,7 +95,7 @@ spec:
           labels:
             severity: warning
           annotations:
-            summary: "Pod {{ $labels.namespace }}/{{ $labels.pod }} is crash looping"
+            summary: "Pod {{ "{{" }} $labels.namespace {{ "}}" }}/{{ "{{" }} $labels.pod {{ "}}" }} is crash looping"
             description: >-
-              Pod {{ $labels.pod }} in namespace {{ $labels.namespace }}
+              Pod {{ "{{" }} $labels.pod {{ "}}" }} in namespace {{ "{{" }} $labels.namespace {{ "}}" }}
               has restarted more than 5 times in the last hour.
