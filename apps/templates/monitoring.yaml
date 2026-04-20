@@ -30,6 +30,10 @@ spec:
         factor: 2
         maxDuration: 3m
   ignoreDifferences:
+    - group: apps
+      kind: StatefulSet
+      jqPathExpressions:
+        - '.spec.replicas'
     - group: admissionregistration.k8s.io
       kind: MutatingWebhookConfiguration
       jqPathExpressions:
