@@ -17,6 +17,8 @@ kube-prometheus-stack:
         requests: { cpu: 100m, memory: 256Mi }
         limits:   { memory: 768Mi }
   grafana:
+    podLabels:
+      demo.gitops: live
     adminPassword: prom-operator
     defaultDashboardsEnabled: true
     dashboardProviders:

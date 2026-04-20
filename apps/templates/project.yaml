@@ -8,7 +8,7 @@ metadata:
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
-  description: Platform-level infrastructure managed by the platform team
+  description: Platform stack — demo edits land via Git, Argo reconciles
   sourceRepos:
     - '*'
   destinations:
